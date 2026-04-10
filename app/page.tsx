@@ -13,7 +13,6 @@ import FloatingText from "../components/FloatingText";
 
 const CUSTOM_CURSOR = `url('data:image/svg+xml;utf8,<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><circle cx="36" cy="36" r="8" fill="%23FF00FF" stroke="white" stroke-width="3"/><line x1="30" y1="30" x2="4" y2="4" stroke="white" stroke-width="6" stroke-linecap="round"/><line x1="30" y1="30" x2="4" y2="4" stroke="%2300FFFF" stroke-width="3" stroke-linecap="round"/></svg>') 4 4, crosshair`;
 
-// Extensión de tipo para ScreenOrientation
 interface ScreenOrientationWithLock extends ScreenOrientation {
   lock: (orientation: string) => Promise<void>;
 }
@@ -49,7 +48,6 @@ export default function NeonBubblesGame() {
           await el.requestFullscreen();
         }
         
-        // Versión corregida del lock de orientación
         if (screen && 'orientation' in screen) {
           const screenOrientation = screen.orientation as ScreenOrientationWithLock;
           if (screenOrientation && typeof screenOrientation.lock === 'function') {
@@ -186,21 +184,28 @@ export default function NeonBubblesGame() {
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-15px); } 50% { transform: translateX(15px); } 75% { transform: translateX(-15px); } }
       `}} />
 
-      <header className="absolute top-0 left-0 w-full p-4 md:p-6 flex justify-between items-start z-50 pointer-events-none">
-        <button onClick={handleExitGame} className="pointer-events-auto text-white flex items-center gap-2 text-xl md:text-2xl font-bold bg-white/10 p-3 md:p-4 rounded-3xl backdrop-blur-md border border-white/20 hover:bg-white/20 transition">
-          <ArrowLeft size={32} /> <span className="hidden md:inline">Atrás</span>
+      {/* HEADER REDISEÑADO PARA MÓVIL */}
+      <header className="absolute top-0 left-0 w-full px-2 py-2 md:p-6 flex justify-between items-start z-50 pointer-events-none">
+        {/* Botón Atrás - más pequeño en móvil */}
+        <button onClick={handleExitGame} className="pointer-events-auto text-white flex items-center gap-1 md:gap-2 text-sm md:text-2xl font-bold bg-white/10 p-2 md:p-4 rounded-2xl md:rounded-3xl backdrop-blur-md border border-white/20 hover:bg-white/20 transition">
+          <ArrowLeft size={24} /> <span className="hidden sm:inline">Atrás</span>
         </button>
 
-        <div className="flex flex-col items-center pointer-events-auto bg-black/50 p-3 md:p-4 rounded-3xl border-2 shadow-2xl transition-all duration-300" style={{ borderColor: targetColor.hex, boxShadow: `0 0 30px ${targetColor.hex}40` }}>
-          <span className="text-white text-xl md:text-3xl font-bold">Nivel {level}</span>
-          <h1 className="text-3xl md:text-6xl font-extrabold uppercase tracking-widest mt-1 md:mt-2 transition-all duration-300" style={{ color: targetColor.hex, textShadow: `0 0 20px ${targetColor.hex}` }}>
-            Toca las {targetColor.name}
+        {/* Texto central - VERSIÓN MÓVIL MÁS PEQUEÑA */}
+        <div className="flex flex-col items-center pointer-events-auto bg-black/50 px-2 py-1 md:p-4 rounded-xl md:rounded-3xl border-2 shadow-2xl transition-all duration-300 max-w-[50%]" style={{ borderColor: targetColor.hex, boxShadow: `0 0 20px ${targetColor.hex}40` }}>
+          <span className="text-white text-xs md:text-3xl font-bold">Nivel {level}</span>
+          <h1 className="text-xs sm:text-sm md:text-6xl font-extrabold uppercase tracking-wider md:tracking-widest mt-0 md:mt-2 transition-all duration-300 text-center leading-tight" style={{ color: targetColor.hex, textShadow: `0 0 10px ${targetColor.hex}` }}>
+            <span className="hidden sm:inline">Toca las </span>
+            <span className="inline sm:hidden">🎯</span>
+            {targetColor.name}
+            <span className="inline sm:hidden"> 🎯</span>
           </h1>
         </div>
 
-        <div className="pointer-events-auto bg-black/50 p-3 md:p-4 rounded-3xl border-2 border-[#FACC15] flex flex-col items-center min-w-[100px] md:min-w-[150px]" style={{ boxShadow: "0 0 30px rgba(250, 204, 21, 0.3)" }}>
-          <span className="text-[#FACC15] text-sm md:text-xl font-bold uppercase">Puntos</span>
-          <span className="text-4xl md:text-6xl font-black text-[#FACC15] transition-all" style={{ textShadow: "0 0 20px #FACC15" }}>{score}</span>
+        {/* Puntuación - más pequeña en móvil */}
+        <div className="pointer-events-auto bg-black/50 px-2 py-1 md:p-4 rounded-xl md:rounded-3xl border-2 border-[#FACC15] flex flex-col items-center min-w-[60px] md:min-w-[150px]" style={{ boxShadow: "0 0 20px rgba(250, 204, 21, 0.3)" }}>
+          <span className="text-[#FACC15] text-[10px] md:text-xl font-bold uppercase">Puntos</span>
+          <span className="text-lg md:text-6xl font-black text-[#FACC15] transition-all leading-none" style={{ textShadow: "0 0 15px #FACC15" }}>{score}</span>
         </div>
       </header>
 
@@ -213,10 +218,10 @@ export default function NeonBubblesGame() {
             transition={{ type: "spring", bounce: 0.5, duration: 0.8 }}
             className="absolute inset-0 flex flex-col items-center justify-center z-[80] bg-black/60 backdrop-blur-sm pointer-events-none"
           >
-            <h2 className="text-7xl md:text-[10rem] font-black text-white drop-shadow-[0_0_30px_#FFF] uppercase tracking-tighter text-center">
+            <h2 className="text-4xl md:text-[10rem] font-black text-white drop-shadow-[0_0_30px_#FFF] uppercase tracking-tighter text-center px-4">
               ¡NIVEL {level}!
             </h2>
-            <p className="text-3xl md:text-4xl text-yellow-400 font-bold mt-4 animate-pulse">¡Más rápido!</p>
+            <p className="text-xl md:text-4xl text-yellow-400 font-bold mt-2 md:mt-4 animate-pulse">¡Más rápido!</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -230,8 +235,8 @@ export default function NeonBubblesGame() {
       {explosions.map((exp) => <ParticleExplosion key={exp.id} x={exp.x} y={exp.y} color={exp.color} />)}
       {floatingTexts.map((ft) => <FloatingText key={ft.id} x={ft.x} y={ft.y} text={ft.text} color={ft.color} />)}
 
-      <button onClick={() => setShowSettings(true)} className="absolute bottom-6 right-6 z-50 bg-white/10 p-4 rounded-full text-white backdrop-blur-md border border-white/20 hover:bg-white/30 transition shadow-xl">
-        <Settings size={40} />
+      <button onClick={() => setShowSettings(true)} className="absolute bottom-4 right-4 z-50 bg-white/10 p-3 rounded-full text-white backdrop-blur-md border border-white/20 hover:bg-white/30 transition shadow-xl">
+        <Settings size={28} />
       </button>
       
       <AnimatePresence>
