@@ -13,6 +13,11 @@ import FloatingText from "../components/FloatingText";
 
 const CUSTOM_CURSOR = `url('data:image/svg+xml;utf8,<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><circle cx="36" cy="36" r="8" fill="%23FF00FF" stroke="white" stroke-width="3"/><line x1="30" y1="30" x2="4" y2="4" stroke="white" stroke-width="6" stroke-linecap="round"/><line x1="30" y1="30" x2="4" y2="4" stroke="%2300FFFF" stroke-width="3" stroke-linecap="round"/></svg>') 4 4, crosshair`;
 
+// Extensión de tipo para ScreenOrientation
+interface ScreenOrientationWithLock extends ScreenOrientation {
+  lock: (orientation: string) => Promise<void>;
+}
+
 export default function NeonBubblesGame() {
   const [gameStarted, setGameStarted] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>("Normal");
@@ -20,12 +25,10 @@ export default function NeonBubblesGame() {
   const [frequency, setFrequency] = useState<Frequency>("Intermedio");
   const [showSettings, setShowSettings] = useState(false);
 
-  // Estados visuales (Lo que ve el jugador)
   const [score, setScore] = useState(0);
   const [level, setLevel] = useState(1);
   const [showLevelUp, setShowLevelUp] = useState(false);
   
-  // Memoria instantánea (Lo que usa la lógica para no equivocarse)
   const scoreRef = useRef(0);
   const levelRef = useRef(1);
 
@@ -42,16 +45,24 @@ export default function NeonBubblesGame() {
     if (isMobile) {
       try {
         const el = document.documentElement;
-        if (el.requestFullscreen) await el.requestFullscreen();
-        if (screen.orientation && screen.orientation.lock) {
-          await screen.orientation.lock("landscape").catch(() => console.log("Rotación manual requerida"));
+        if (el.requestFullscreen && !document.fullscreenElement) {
+          await el.requestFullscreen();
+        }
+        
+        // Versión corregida del lock de orientación
+        if (screen && 'orientation' in screen) {
+          const screenOrientation = screen.orientation as ScreenOrientationWithLock;
+          if (screenOrientation && typeof screenOrientation.lock === 'function') {
+            await screenOrientation.lock("landscape").catch((err) => {
+              console.log("Rotación manual requerida:", err);
+            });
+          }
         }
       } catch (error) {
-        console.log("No se pudo forzar pantalla completa.");
+        console.log("No se pudo forzar pantalla completa o rotación:", error);
       }
     }
     
-    // Reiniciamos memoria matemática y visual
     scoreRef.current = 0;
     levelRef.current = 1;
     setScore(0);
@@ -63,7 +74,9 @@ export default function NeonBubblesGame() {
   const handleExitGame = async () => {
     setGameStarted(false);
     try {
-      if (document.fullscreenElement) await document.exitFullscreen();
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      }
     } catch (error) {
       console.log("Error al salir de pantalla completa");
     }
@@ -74,7 +87,6 @@ export default function NeonBubblesGame() {
     setTargetColor(randomColor);
   }, []);
 
-  // --- GENERADOR DE BURBUJAS ---
   useEffect(() => {
     if (showSettings || !gameStarted || showLevelUp) return;
     
@@ -96,7 +108,6 @@ export default function NeonBubblesGame() {
     return () => clearInterval(interval);
   }, [targetColor, frequency, level, showSettings, gameStarted, showLevelUp]);
 
-  // --- LÓGICA DE INTERACCIÓN (Ahora usa Refs para máxima velocidad y precisión) ---
   const handleInteraction = (bubble: BubbleData, rect: DOMRect) => {
     setBubbles(p => p.filter(b => b.id !== bubble.id));
 
@@ -107,16 +118,12 @@ export default function NeonBubblesGame() {
     if (bubble.color.id === targetColor.id) {
       const points = bubble.isSpecial ? 30 : 10;
       
-      // 1. Sumamos a la memoria instantánea
       scoreRef.current += points;
-      // 2. Le avisamos a React que dibuje el nuevo puntaje
       setScore(scoreRef.current);
       
-      // Calculamos el nivel matemáticamente en el mismo instante
       const expectedLevel = Math.floor(scoreRef.current / 100) + 1;
       
       if (expectedLevel > levelRef.current) {
-        // ¡SUBIÓ DE NIVEL! Actualizamos memoria y pantalla sin errores.
         levelRef.current = expectedLevel;
         setLevel(expectedLevel);
         pickNewTarget();
@@ -136,7 +143,6 @@ export default function NeonBubblesGame() {
       }, 1000);
 
     } else {
-      // Restamos puntos asegurando que no baje de 0
       scoreRef.current = Math.max(0, scoreRef.current - 10);
       setScore(scoreRef.current);
       playSound("error");
